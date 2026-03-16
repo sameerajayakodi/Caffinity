@@ -8,18 +8,41 @@ import KitchenPage from './pages/kitchen/KitchenPage';
 import PaymentPage from './pages/payment/PaymentPage';
 import AdminPage from './pages/admin/AdminPage';
 
+import { AuthGuard } from './components/AuthGuard';
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-cream font-sans">
       <Navbar />
       <ToastContainer />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/menu" element={<MenuPage />} />
-        <Route path="/pos" element={<POSPage />} />
-        <Route path="/kitchen" element={<KitchenPage />} />
+        <Route 
+          path="/pos" 
+          element={
+            <AuthGuard>
+              <POSPage />
+            </AuthGuard>
+          } 
+        />
+        <Route 
+          path="/kitchen" 
+          element={
+            <AuthGuard>
+              <KitchenPage />
+            </AuthGuard>
+          } 
+        />
         <Route path="/payment/:orderId" element={<PaymentPage />} />
-        <Route path="/admin" element={<AdminPage />} />
+        <Route 
+          path="/admin" 
+          element={
+            <AuthGuard>
+              <AdminPage />
+            </AuthGuard>
+          } 
+        />
       </Routes>
     </div>
   );

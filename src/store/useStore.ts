@@ -38,6 +38,11 @@ interface AppStore {
   markOrderPaid: (orderId: string) => void;
   getOrderById: (orderId: string) => Order | undefined;
 
+  // Auth
+  isAuthenticated: boolean;
+  login: (username: string, password: string) => boolean;
+  logout: () => void;
+
   // Toast notifications
   toasts: Toast[];
   addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -45,6 +50,21 @@ interface AppStore {
 }
 
 export const useStore = create<AppStore>((set, get) => ({
+  // Auth
+  isAuthenticated: false,
+  login: (username, password) => {
+    if (username === 'admin' && password === 'admin') {
+      set({ isAuthenticated: true });
+      get().addToast('Logged in successfully', 'success');
+      return true;
+    }
+    get().addToast('Invalid credentials', 'error');
+    return false;
+  },
+  logout: () => {
+    set({ isAuthenticated: false });
+    get().addToast('Logged out', 'info');
+  },
   // Products
   products: [...mockProducts],
 
