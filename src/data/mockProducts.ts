@@ -18,7 +18,7 @@ export const mockProducts: Product[] = [
     description: 'Double shot espresso for those who need an extra kick. Intense and full-bodied.',
     price: 4.50,
     category: 'Espresso',
-    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefda?w=400&h=300&fit=crop',
+    image: 'https://images.unsplash.com/photo-1497636577773-f1231844b336?w=400&h=300&fit=crop',
     available: true,
     popular: false,
   },

@@ -5,7 +5,8 @@ import { formatCurrency } from '../../utils/helpers';
 import {
   Plus, Edit3, Trash2, X, Save, Upload, Search,
   Package, BarChart3, Coffee, Settings, Eye, EyeOff,
-  LayoutGrid, List, Users, CreditCard
+  LayoutGrid, List, Users, CreditCard, LayoutDashboard,
+  TrendingUp, Clock, ChevronRight, ShoppingBag
 } from 'lucide-react';
 
 const categories: Category[] = ['Espresso', 'Cappuccino', 'Latte', 'Iced Coffee', 'Pastries', 'Desserts'];
@@ -52,7 +53,7 @@ export default function AdminPage() {
   const { products, addProduct, updateProduct, deleteProduct, orders, customers, addCustomer, updateCustomer, deleteCustomer } = useStore();
   
   // App State
-  const [activeTab, setActiveTab] = useState<'products' | 'customers'>('products');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'customers'>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -222,61 +223,32 @@ export default function AdminPage() {
           <p className="text-xs text-warm-gray mt-0.5">Manage your café</p>
         </div>
 
-        {/* Stats */}
-        <div className="space-y-3 mb-6">
-          <div className="bg-cream rounded-xl p-3 border border-latte/20">
-            <div className="flex items-center gap-2 mb-1">
-              <Package className="w-4 h-4 text-olive" />
-              <span className="text-xs text-warm-gray font-medium">Products</span>
-            </div>
-            <p className="text-2xl font-bold text-espresso">{totalProducts}</p>
-            <p className="text-xs text-warm-gray">{availableProducts} available</p>
-          </div>
-          <div className="bg-cream rounded-xl p-3 border border-latte/20">
-            <div className="flex items-center gap-2 mb-1">
-              <Coffee className="w-4 h-4 text-gold" />
-              <span className="text-xs text-warm-gray font-medium">Orders</span>
-            </div>
-            <p className="text-2xl font-bold text-espresso">{totalOrders}</p>
-          </div>
-          <div className="bg-cream rounded-xl p-3 border border-latte/20">
-            <div className="flex items-center gap-2 mb-1">
-              <BarChart3 className="w-4 h-4 text-tomato" />
-              <span className="text-xs text-warm-gray font-medium">Revenue</span>
-            </div>
-            <p className="text-2xl font-bold text-olive">{formatCurrency(totalRevenue)}</p>
-          </div>
-        </div>
-
-        {/* Categories / Tabs */}
-        <div className="mb-4">
-          <div className="flex bg-cream p-1 rounded-2xl border border-latte/20 mb-6">
+        {/* Navigation */}
+        <nav className="space-y-2 mb-8">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors
+              ${activeTab === 'dashboard' ? 'bg-espresso text-cream shadow-sm' : 'text-warm-gray hover:bg-latte/30 hover:text-espresso'}`}
+          >
+            <LayoutDashboard className="w-5 h-5" />
+            Dashboard
+          </button>
+          <div className="space-y-2">
             <button
               onClick={() => setActiveTab('products')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm transition-all
-                ${activeTab === 'products' ? 'bg-white text-espresso shadow-sm' : 'text-warm-gray hover:text-espresso hover:bg-white/50'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors
+                ${activeTab === 'products' ? 'bg-espresso text-cream shadow-sm' : 'text-warm-gray hover:bg-latte/30 hover:text-espresso'}`}
             >
-              <Package className="w-4 h-4" />
+              <Package className="w-5 h-5" />
               Products
             </button>
-            <button
-              onClick={() => setActiveTab('customers')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm transition-all
-                ${activeTab === 'customers' ? 'bg-white text-espresso shadow-sm' : 'text-warm-gray hover:text-espresso hover:bg-white/50'}`}
-            >
-              <Users className="w-4 h-4" />
-              Customers
-            </button>
-          </div>
-
-          {activeTab === 'products' && (
-            <div>
-              <h3 className="text-xs text-warm-gray font-semibold uppercase mb-2 tracking-wider">Categories</h3>
-              <div className="space-y-1">
+            
+            {activeTab === 'products' && (
+              <div className="ml-5 pl-4 border-l-2 border-latte/30 space-y-1 py-1 animate-fade-in">
                 <button
                   onClick={() => setFilterCategory('All')}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors
-                    ${filterCategory === 'All' ? 'bg-espresso text-cream' : 'text-espresso-light hover:bg-latte/30'}`}
+                  className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                    ${filterCategory === 'All' ? 'bg-latte text-espresso font-semibold' : 'text-warm-gray hover:bg-latte/30 hover:text-espresso'}`}
                 >
                   All Categories
                 </button>
@@ -284,20 +256,148 @@ export default function AdminPage() {
                   <button
                     key={cat}
                     onClick={() => setFilterCategory(cat)}
-                    className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors
-                      ${filterCategory === cat ? 'bg-espresso text-cream' : 'text-espresso-light hover:bg-latte/30'}`}
+                    className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                      ${filterCategory === cat ? 'bg-latte text-espresso font-semibold' : 'text-warm-gray hover:bg-latte/30 hover:text-espresso'}`}
                   >
                     {cat}
                   </button>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          <button
+            onClick={() => setActiveTab('customers')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors
+              ${activeTab === 'customers' ? 'bg-espresso text-cream shadow-sm' : 'text-warm-gray hover:bg-latte/30 hover:text-espresso'}`}
+          >
+            <Users className="w-5 h-5" />
+            Customers
+          </button>
+        </nav>
         </div>
-      </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col bg-cream/30">
+        {activeTab === 'dashboard' ? (
+          <div className="flex-1 overflow-y-auto p-8 space-y-8">
+            <div>
+              <h1 className="font-display text-3xl font-bold text-espresso">Dashboard Overview</h1>
+              <p className="text-warm-gray mt-1">Here's what is happening in your store today.</p>
+            </div>
+            
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+               <div className="bg-white rounded-3xl p-6 border border-latte/20 shadow-sm hover:shadow-md transition-shadow">
+                 <div className="flex items-center justify-between mb-4">
+                   <div className="p-3 bg-olive/10 rounded-2xl">
+                     <TrendingUp className="w-6 h-6 text-olive" />
+                   </div>
+                   <span className="text-xs font-bold text-olive bg-olive/10 px-2.5 py-1 rounded-lg">+12%</span>
+                 </div>
+                 <h3 className="text-sm font-semibold text-warm-gray">Total Revenue</h3>
+                 <p className="text-3xl font-bold text-espresso mt-1">{formatCurrency(totalRevenue)}</p>
+               </div>
+               
+               <div className="bg-white rounded-3xl p-6 border border-latte/20 shadow-sm hover:shadow-md transition-shadow">
+                 <div className="flex items-center justify-between mb-4">
+                   <div className="p-3 bg-gold/10 rounded-2xl">
+                     <ShoppingBag className="w-6 h-6 text-gold" />
+                   </div>
+                   <span className="text-xs font-bold text-gold bg-gold/10 px-2.5 py-1 rounded-lg">+5%</span>
+                 </div>
+                 <h3 className="text-sm font-semibold text-warm-gray">Total Orders</h3>
+                 <p className="text-3xl font-bold text-espresso mt-1">{totalOrders}</p>
+               </div>
+               
+               <div className="bg-white rounded-3xl p-6 border border-latte/20 shadow-sm hover:shadow-md transition-shadow">
+                 <div className="flex items-center justify-between mb-4">
+                   <div className="p-3 bg-tomato/10 rounded-2xl">
+                     <Users className="w-6 h-6 text-tomato" />
+                   </div>
+                   <span className="text-xs font-bold text-tomato bg-tomato/10 px-2.5 py-1 rounded-lg">+18%</span>
+                 </div>
+                 <h3 className="text-sm font-semibold text-warm-gray">New Customers</h3>
+                 <p className="text-3xl font-bold text-espresso mt-1">{customers.length}</p>
+               </div>
+               
+               <div className="bg-white rounded-3xl p-6 border border-latte/20 shadow-sm hover:shadow-md transition-shadow">
+                 <div className="flex items-center justify-between mb-4">
+                   <div className="p-3 bg-blue-500/10 rounded-2xl">
+                     <Package className="w-6 h-6 text-blue-500" />
+                   </div>
+                 </div>
+                 <h3 className="text-sm font-semibold text-warm-gray">Active Products</h3>
+                 <p className="text-3xl font-bold text-espresso mt-1">{availableProducts}</p>
+               </div>
+            </div>
+
+            {/* Recent Orders & Popular Products */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 bg-white rounded-3xl border border-latte/20 shadow-sm p-6 lg:p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-display text-xl font-bold text-espresso">Recent Orders</h2>
+                  <button className="text-sm text-olive font-semibold hover:text-olive-light transition-colors flex items-center gap-1">
+                    View All <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {orders.slice(-5).reverse().map(order => (
+                    <div key={order.id} className="flex items-center justify-between p-4 rounded-2xl bg-cream/50 border border-latte/10 hover:border-latte/30 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-latte/20 flex items-center justify-center text-espresso font-bold text-sm">
+                          #{order.id.slice(0,4)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-espresso text-sm flex items-center gap-2">
+                            Order {order.id.slice(0,6)}
+                            <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider
+                              ${order.status === 'Completed' ? 'bg-olive/10 text-olive' : 'bg-gold/10 text-gold'}`}>
+                              {order.status}
+                            </span>
+                          </p>
+                          <p className="text-xs text-warm-gray flex items-center gap-1 mt-0.5">
+                            <Clock className="w-3 h-3" />
+                            {new Date(order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • {order.items.length} items
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-olive text-lg">{formatCurrency(order.total)}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {orders.length === 0 && (
+                    <div className="text-center py-10 bg-cream/30 rounded-2xl border border-dashed border-latte">
+                      <ShoppingBag className="w-8 h-8 text-warm-gray mx-auto mb-2 opacity-50" />
+                      <p className="text-warm-gray text-sm font-medium">No orders today</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-3xl border border-latte/20 shadow-sm p-6 lg:p-8">
+                <h2 className="font-display text-xl font-bold text-espresso mb-6">Popular Items</h2>
+                <div className="space-y-5">
+                  {products.filter(p => p.popular).slice(0, 5).map(product => (
+                    <div key={product.id} className="flex items-center gap-4">
+                      <img src={product.image} alt={product.name} className="w-14 h-14 rounded-2xl object-cover shadow-sm border border-latte/10" />
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm text-espresso line-clamp-1">{product.name}</p>
+                        <p className="text-xs font-medium text-warm-gray mt-0.5">{product.category}</p>
+                      </div>
+                      <span className="font-bold text-espresso text-sm bg-cream px-3 py-1 rounded-xl border border-latte/20">{formatCurrency(product.price)}</span>
+                    </div>
+                  ))}
+                  {products.filter(p => p.popular).length === 0 && (
+                    <p className="text-center text-warm-gray py-4 text-sm">No popular items marked.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Toolbar */}
         <div className="bg-white border-b border-latte/30 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -577,6 +677,8 @@ export default function AdminPage() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {/* Product Add/Edit Modal */}
