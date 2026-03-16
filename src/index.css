@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #FFF8F0;
+  --color-cream-dark: #F5E6D3;
+  --color-latte: #E8D5B7;
+  --color-espresso: #3E2723;
+  --color-espresso-light: #5D4037;
+  --color-olive: #556B2F;
+  --color-olive-light: #6B8E23;
+  --color-tomato: #E74C3C;
+  --color-tomato-light: #FF6B6B;
+  --color-gold: #D4A574;
+  --color-gold-light: #E8C9A0;
+  --color-warm-white: #FEFCF9;
+  --color-warm-gray: #8B7D6B;
+
+  --font-sans: 'Poppins', 'Segoe UI', sans-serif;
+  --font-display: 'Poppins', 'Segoe UI', sans-serif;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-cream);
+    color: var(--color-espresso);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-gold);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-espresso-light);
+}
+
+/* Toast animation */
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+.toast-enter {
+  animation: slideIn 0.3s ease-out;
+}
+.toast-exit {
+  animation: slideOut 0.3s ease-in;
+}
+
+/* Pulse for kitchen status */
+@keyframes pulse-warm {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+}
+.pulse-pending {
+  animation: pulse-warm 2s infinite;
+}
