@@ -66,55 +66,97 @@ export default function MenuPage() {
 
   return (
     <div className="min-h-screen bg-cream">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-espresso via-espresso-light to-espresso px-4 pt-6 pb-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-4 right-8 text-6xl">☕</div>
-          <div className="absolute bottom-4 left-12 text-4xl">🫘</div>
-          <div className="absolute top-12 left-1/2 text-3xl">✨</div>
+      {/* Hero Header */}
+      <div className="relative py-14 px-4 overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&q=80" 
+            alt="Coffee beans background" 
+            className="w-full rounded-2xl h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-espresso via-espresso/80 to-espresso/60 backdrop-blur-[2px]"></div>
         </div>
-        <div className="max-w-2xl mx-auto relative z-10">
-          <h1 className="font-display text-3xl font-bold text-cream text-center">Il Nostro Menu</h1>
-          <p className="text-gold-light text-center mt-1 text-sm">Discover the taste of Italy</p>
+        
+        <div className="max-w-4xl mx-auto relative z-10 text-center">
+          <h1 className="font-display text-4xl md:text-5xl font-bold text-cream mb-3 tracking-wide">
+            Il Nostro Menu
+          </h1>
+          <p className="text-gold-light text-base md:text-lg max-w-xl mx-auto font-medium mb-8">
+            Discover the authentico taste of Italy in every sip. Carefully roasted, flawlessly poured.
+          </p>
 
           {/* Search Bar */}
-          <div className="mt-4 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-warm-gray" />
+          <div className="max-w-2xl mx-auto relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-warm-gray" />
             <input
               type="text"
-              placeholder="Search our menu..."
+              placeholder="Cerca il tuo caffè preferito..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-12 py-3 rounded-2xl bg-white/95 text-espresso placeholder-warm-gray focus:outline-none focus:ring-2 focus:ring-gold shadow-lg text-sm"
+              className="w-full pl-12 pr-14 py-4 rounded-full bg-white/95 text-espresso placeholder-warm-gray focus:outline-none focus:ring-4 focus:ring-gold/30 shadow-2xl text-base transition-all"
             />
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-colors ${showFilters ? 'bg-tomato text-white' : 'bg-latte/50 text-espresso-light hover:bg-latte'}`}
+              className={`absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-full transition-colors ${showFilters ? 'bg-tomato text-white' : 'bg-latte text-espresso-light hover:bg-latte-dark hover:text-espresso'}`}
+              title="Filters"
             >
               <Filter className="w-4 h-4" />
             </button>
           </div>
+
+          {/* Categories */}
+          <div className="flex gap-4 overflow-x-auto pt-8 scrollbar-hide px-2 justify-start md:justify-center">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className="flex flex-col items-center gap-3 shrink-0 group focus:outline-none"
+              >
+                <div 
+                  className={`w-[72px] h-[72px] rounded-full flex items-center justify-center text-3xl transition-all duration-300 relative
+                    ${selectedCategory === cat 
+                      ? 'bg-gradient-to-br from-cream to-white text-espresso shadow-[0_8px_20px_rgb(255,255,255,0.2)] scale-110 -translate-y-2 border-2 border-white' 
+                      : 'bg-white/10 backdrop-blur-sm border text-white border-white/20 shadow-sm group-hover:bg-white/20 group-hover:-translate-y-1'
+                    }`}
+                >
+                  {selectedCategory === cat && (
+                    <span className="absolute inset-0 rounded-full border-4 border-white/40 animate-ping opacity-50"></span>
+                  )}
+                  <span className={selectedCategory === cat ? 'drop-shadow-sm' : ''}>
+                    {categoryEmojis[cat]}
+                  </span>
+                </div>
+                <span 
+                  className={`text-[12px] uppercase tracking-wider font-bold whitespace-nowrap transition-colors duration-300
+                    ${selectedCategory === cat ? 'text-white drop-shadow-md' : 'text-white/70 group-hover:text-white'}`}
+                >
+                  {cat}
+                </span>
+              </button>
+            ))}
+          </div>
+
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-2xl mx-auto px-4 -mt-8 relative z-10 pb-28">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Filters Panel */}
         {showFilters && (
-          <div className="bg-white rounded-2xl shadow-lg p-4 mb-4 border border-latte/30">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-espresso">Filters</h3>
-              <button onClick={() => setShowFilters(false)} className="text-warm-gray hover:text-espresso">
+          <div className="bg-white rounded-2xl shadow-xl p-5 mb-6 border border-latte/30 animate-[slideDown_0.2s_ease-out] max-w-2xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-espresso uppercase tracking-wider">Refine Options</h3>
+              <button onClick={() => setShowFilters(false)} className="text-warm-gray hover:text-tomato transition-colors p-1 bg-latte/20 rounded-lg">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap gap-2 mb-4">
               {priceRanges.map((range, i) => (
                 <button
                   key={range.label}
                   onClick={() => setPriceRange(i)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all
-                    ${priceRange === i ? 'bg-olive text-white shadow-md' : 'bg-cream text-espresso-light hover:bg-latte/50'}`}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200
+                    ${priceRange === i ? 'bg-olive text-white shadow-md scale-105' : 'bg-latte/30 text-espresso-light hover:bg-latte/60'}`}
                 >
                   {range.label}
                 </button>
@@ -122,35 +164,17 @@ export default function MenuPage() {
             </div>
             <button
               onClick={() => setShowPopular(!showPopular)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium transition-all
-                ${showPopular ? 'bg-gold text-espresso shadow-md' : 'bg-cream text-espresso-light hover:bg-latte/50'}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200
+                ${showPopular ? 'bg-gold text-espresso shadow-md scale-105' : 'bg-latte/30 text-espresso-light hover:bg-latte/60'}`}
             >
-              <Star className="w-3 h-3" />
+              <Star className="w-3.5 h-3.5" />
               Popular Only
             </button>
           </div>
         )}
 
-        {/* Categories */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0
-                ${selectedCategory === cat
-                  ? 'bg-espresso text-cream shadow-lg scale-105'
-                  : 'bg-white text-espresso-light hover:bg-latte/40 shadow-sm border border-latte/30'
-                }`}
-            >
-              <span>{categoryEmojis[cat]}</span>
-              {cat}
-            </button>
-          ))}
-        </div>
-
         {/* Product Grid */}
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 mt-8 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product) => {
             const qty = getCartQuantity(product.id);
             return (
@@ -158,48 +182,49 @@ export default function MenuPage() {
                 key={product.id}
                 className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-latte/20 group"
               >
-                <div className="relative h-32 overflow-hidden">
+                <div className="relative h-48 overflow-hidden">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-espresso/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   {product.popular && (
-                    <div className="absolute top-2 left-2 bg-gold/90 text-espresso text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Star className="w-2.5 h-2.5 fill-current" />
+                    <div className="absolute top-3 left-3 bg-gold/95 backdrop-blur-sm text-espresso text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
+                      <Star className="w-3 h-3 fill-current" />
                       Popular
                     </div>
                   )}
-                  <div className="absolute top-2 right-2 bg-espresso/80 text-cream text-xs font-bold px-2 py-1 rounded-xl">
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md text-espresso text-sm font-bold px-3 py-1 rounded-full shadow-md">
                     {formatCurrency(product.price)}
                   </div>
                 </div>
-                <div className="p-3">
-                  <h3 className="font-semibold text-sm text-espresso leading-tight">{product.name}</h3>
-                  <p className="text-[11px] text-warm-gray mt-1 line-clamp-2">{product.description}</p>
-                  <div className="mt-2">
+                <div className="p-5 flex flex-col flex-grow">
+                  <h3 className="font-display font-bold text-lg text-espresso line-clamp-1">{product.name}</h3>
+                  <p className="text-sm text-warm-gray mt-1 line-clamp-2 flex-grow">{product.description}</p>
+                  <div className="mt-4 pt-4 border-t border-latte/30">
                     {qty === 0 ? (
                       <button
                         onClick={() => addToCart(product)}
-                        className="w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-olive to-olive-light text-white py-2 rounded-xl text-xs font-semibold hover:shadow-md transition-all active:scale-95"
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-olive to-olive-light text-white py-3 rounded-xl text-sm font-semibold shadow-md inline-flex hover:shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-4 h-4" />
                         Add to Cart
                       </button>
                     ) : (
-                      <div className="flex items-center justify-between bg-cream rounded-xl p-1">
+                      <div className="flex items-center justify-between bg-cream rounded-2xl p-1.5 border border-latte/30">
                         <button
                           onClick={() => updateCartQuantity(product.id, qty - 1)}
-                          className="w-8 h-8 flex items-center justify-center bg-white rounded-lg text-tomato hover:bg-tomato/10 transition-colors shadow-sm"
+                          className="w-10 h-10 flex items-center justify-center bg-white rounded-xl text-tomato hover:bg-tomato/10 transition-colors shadow-sm"
                         >
-                          <Minus className="w-3.5 h-3.5" />
+                          <Minus className="w-5 h-5" />
                         </button>
-                        <span className="text-sm font-bold text-espresso">{qty}</span>
+                        <span className="text-lg font-bold text-espresso w-8 text-center">{qty}</span>
                         <button
                           onClick={() => addToCart(product)}
-                          className="w-8 h-8 flex items-center justify-center bg-olive text-white rounded-lg hover:bg-olive-light transition-colors shadow-sm"
+                          className="w-10 h-10 flex items-center justify-center bg-olive text-white rounded-xl hover:bg-olive-light transition-colors shadow-sm"
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-5 h-5" />
                         </button>
                       </div>
                     )}
@@ -224,24 +249,28 @@ export default function MenuPage() {
         )}
       </div>
 
-      {/* Sticky Cart Bar */}
+      {/* Sticky Cart Bar for Mobile / Floating Cart Bar for Desktop */}
       {cartCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-white via-white to-white/80">
-          <div className="max-w-2xl mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 z-40 p-4 md:p-6 md:left-auto md:w-[400px] pointer-events-none">
+          <div className="pointer-events-auto">
             <button
               onClick={() => setShowCart(true)}
-              className="w-full bg-gradient-to-r from-espresso to-espresso-light text-cream py-4 rounded-2xl flex items-center justify-between px-6 shadow-xl hover:shadow-2xl transition-shadow active:scale-[0.99]"
+              className="w-full bg-gradient-to-r from-espresso to-espresso-light text-cream py-4 rounded-full flex items-center justify-between px-6 shadow-[0_8px_30px_rgb(0,0,0,0.3)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.4)] transition-all transform hover:-translate-y-1 active:scale-[0.98] border border-white/10"
             >
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <ShoppingBag className="w-6 h-6" />
-                  <span className="absolute -top-2 -right-2 w-5 h-5 bg-tomato text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              <div className="flex items-center gap-4">
+                <div className="relative bg-white/10 p-2.5 rounded-full">
+                  <ShoppingBag className="w-5 h-5" />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-tomato text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-espresso-light shadow-sm">
                     {cartCount}
                   </span>
                 </div>
-                <span className="font-semibold">View Cart</span>
+                <div className="text-left hidden xs:block">
+                  <p className="text-xs text-white/70 font-medium uppercase tracking-wider">Your Order</p>
+                  <p className="font-semibold text-sm">View Cart</p>
+                </div>
+                <div className="text-left xs:hidden font-semibold">View Cart</div>
               </div>
-              <span className="font-bold text-lg">{formatCurrency(cartTotal)}</span>
+              <span className="font-bold text-xl">{formatCurrency(cartTotal)}</span>
             </button>
           </div>
         </div>
@@ -249,11 +278,11 @@ export default function MenuPage() {
 
       {/* Cart Modal */}
       {showCart && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowCart(false)} />
-          <div className="relative bg-white w-full max-w-2xl rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col animate-[slideUp_0.3s_ease-out]">
+        <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-0 md:p-6">
+          <div className="absolute inset-0 bg-espresso/60 backdrop-blur-sm transition-opacity" onClick={() => setShowCart(false)} />
+          <div className="relative bg-white w-full max-w-lg md:rounded-3xl rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col animate-[slideUp_0.3s_ease-out] md:animate-[fadeIn_0.2s_ease-out]">
             {/* Cart Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-latte/30">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-latte/30 bg-cream/50 md:rounded-t-3xl rounded-t-3xl">
               <h2 className="font-display text-xl font-bold text-espresso">Your Cart</h2>
               <button onClick={() => setShowCart(false)} className="p-2 rounded-xl hover:bg-latte/30 transition-colors">
                 <X className="w-5 h-5 text-espresso" />
@@ -261,54 +290,58 @@ export default function MenuPage() {
             </div>
 
             {/* Cart Items */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
               {cart.map((item) => (
-                <div key={item.product.id} className="flex items-center gap-3 bg-cream rounded-2xl p-3">
-                  <img src={item.product.image} alt={item.product.name} className="w-16 h-16 rounded-xl object-cover" />
+                <div key={item.product.id} className="flex items-center gap-4 bg-white border border-latte/20 shadow-sm rounded-2xl p-3">
+                  <img src={item.product.image} alt={item.product.name} className="w-20 h-20 rounded-xl object-cover" />
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-sm text-espresso truncate">{item.product.name}</h4>
-                    <p className="text-xs text-warm-gray">{formatCurrency(item.product.price)} each</p>
+                    <h4 className="font-semibold text-base text-espresso truncate">{item.product.name}</h4>
+                    <p className="text-sm text-warm-gray mb-2">{formatCurrency(item.product.price)} each</p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center bg-cream rounded-lg p-1 border border-latte/30">
+                        <button
+                          onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
+                          className="w-7 h-7 flex items-center justify-center bg-white rounded-md text-tomato shadow-sm hover:bg-tomato/10 transition-colors"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="text-sm font-bold w-8 text-center text-espresso">{item.quantity}</span>
+                        <button
+                          onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
+                          className="w-7 h-7 flex items-center justify-center bg-olive text-white rounded-md shadow-sm hover:bg-olive-light transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
-                      className="w-7 h-7 flex items-center justify-center bg-white rounded-lg text-tomato shadow-sm hover:bg-tomato/10"
-                    >
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="text-sm font-bold w-5 text-center">{item.quantity}</span>
-                    <button
-                      onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
-                      className="w-7 h-7 flex items-center justify-center bg-olive text-white rounded-lg shadow-sm hover:bg-olive-light"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
+                  <div className="flex flex-col items-end gap-2 shrink-0 pr-2">
+                    <p className="font-bold text-lg text-espresso">
+                      {formatCurrency(item.product.price * item.quantity)}
+                    </p>
                   </div>
-                  <p className="font-bold text-sm text-espresso w-14 text-right">
-                    {formatCurrency(item.product.price * item.quantity)}
-                  </p>
                 </div>
               ))}
             </div>
 
             {/* Cart Footer */}
-            <div className="border-t border-latte/30 px-6 py-4 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-warm-gray font-medium">Total</span>
-                <span className="text-2xl font-bold text-espresso">{formatCurrency(cartTotal)}</span>
+            <div className="border-t border-latte/30 px-6 py-5 bg-cream/30 md:rounded-b-3xl rounded-b-none">
+              <div className="flex justify-between items-center mb-5 bg-white p-4 rounded-xl shadow-sm border border-latte/20">
+                <span className="text-warm-gray font-semibold">Total Amount</span>
+                <span className="text-2xl font-display font-bold text-espresso">{formatCurrency(cartTotal)}</span>
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => { clearCart(); setShowCart(false); }}
-                  className="flex-1 py-3 rounded-2xl border-2 border-latte text-warm-gray font-semibold hover:border-tomato hover:text-tomato transition-colors"
+                  className="w-1/3 py-4 rounded-2xl border-2 border-latte text-warm-gray font-semibold hover:border-tomato hover:text-tomato hover:bg-tomato/5 transition-all"
                 >
-                  Clear Cart
+                  Clear
                 </button>
                 <button
                   onClick={() => { setShowCart(false); handlePlaceOrder(); }}
-                  className="flex-2 py-3 px-8 rounded-2xl bg-gradient-to-r from-olive to-olive-light text-white font-semibold shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
+                  className="w-2/3 py-4 rounded-2xl bg-gradient-to-r from-olive to-olive-light text-white font-semibold shadow-[0_8px_20px_rgb(209,215,160,0.5)] hover:shadow-[0_8px_25px_rgb(209,215,160,0.7)] transition-all hover:-translate-y-0.5 active:scale-[0.98] text-lg flex justify-center items-center gap-2"
                 >
-                  Place Order 🎉
+                  Checkout <span>🇮🇹</span>
                 </button>
               </div>
             </div>
@@ -318,8 +351,16 @@ export default function MenuPage() {
 
       <style>{`
         @keyframes slideUp {
-          from { transform: translateY(100%); }
-          to { transform: translateY(0); }
+          from { transform: translateY(10%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideDown {
+          from { transform: translateY(-10%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.98); }
+          to { opacity: 1; transform: scale(1); }
         }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
