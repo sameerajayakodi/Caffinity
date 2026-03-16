@@ -7,12 +7,14 @@ import { useState } from 'react';
 
 export default function PaymentPage() {
   const { orderId } = useParams<{ orderId: string }>();
-  const { getOrderById, markOrderPaid, addToast } = useStore();
   const navigate = useNavigate();
-  const [processing, setProcessing] = useState(false);
-  const [paid, setPaid] = useState(false);
+  const { getOrderById, markOrderPaid, addToast, customers } = useStore();
+  
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const order = orderId ? getOrderById(orderId) : undefined;
+  const order = getOrderById(orderId || '');
+  const customer = order?.customerId ? customers.find(c => c.id === order.customerId) : null;
 
   if (!order) {
     return (
@@ -33,16 +35,16 @@ export default function PaymentPage() {
   }
 
   const handlePayment = () => {
-    setProcessing(true);
+    setIsProcessing(true);
     setTimeout(() => {
-      setProcessing(false);
-      setPaid(true);
+      setIsProcessing(false);
+      setIsSuccess(true);
       markOrderPaid(order.id);
       addToast('Payment successful! 🎉', 'success');
     }, 2000);
   };
 
-  const alreadyPaid = order.paymentStatus === 'paid' || paid;
+  const alreadyPaid = order.paymentStatus === 'paid' || isSuccess;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-cream to-latte/30 flex items-center justify-center p-4">
@@ -139,23 +141,49 @@ export default function PaymentPage() {
               </div>
 
               {/* Pay Button */}
+              {customer && customer.savedPaymentMethod && (
+                <div className="mb-4 text-center">
+                  <div className="bg-latte/10 rounded-2xl p-4 flex items-center justify-between mb-3 border border-latte/30">
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="w-5 h-5 text-espresso" />
+                      <div className="text-left">
+                        <p className="text-sm font-bold text-espresso">{customer.name}</p>
+                        <p className="text-xs text-warm-gray">
+                          {customer.savedPaymentMethod.brand.toUpperCase()} ending in {customer.savedPaymentMethod.last4}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-olive/10 text-olive text-xs font-bold px-2 py-1 rounded-md">
+                      Saved
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={handlePayment}
+                    disabled={isProcessing}
+                    className="w-full py-4 rounded-2xl bg-espresso text-cream font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-2"
+                  >
+                    Pay Automatically
+                  </button>
+                  <div className="my-4 flex items-center gap-2">
+                    <div className="flex-1 h-px bg-latte/50" />
+                    <span className="text-xs text-warm-gray font-medium uppercase tracking-wider">OR</span>
+                    <div className="flex-1 h-px bg-latte/50" />
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={handlePayment}
-                disabled={processing}
-                className={`w-full py-4 rounded-2xl font-bold text-lg shadow-lg transition-all active:scale-[0.98]
-                  ${processing
+                disabled={isProcessing}
+                className={`w-full py-4 rounded-2xl font-bold text-lg shadow-lg transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-2
+                  ${isProcessing
                     ? 'bg-warm-gray text-white cursor-wait'
                     : 'bg-gradient-to-r from-olive to-olive-light text-white hover:shadow-xl'
                   }`}
               >
-                {processing ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Processing Payment...
-                  </span>
+                {isProcessing ? (
+                  <span className="animate-pulse">Processing...</span>
                 ) : (
                   `Pay ${formatCurrency(order.total)}`
                 )}

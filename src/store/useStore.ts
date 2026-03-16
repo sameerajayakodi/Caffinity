@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import type { Product, Order, OrderStatus, CartItem } from '../types';
+import type { Product, Order, OrderStatus, CartItem, Customer } from '../types';
 import { mockProducts } from '../data/mockProducts';
+import { mockCustomers } from '../data/mockCustomers';
 import { generateOrderId } from '../utils/helpers';
 
 interface Toast {
@@ -16,6 +17,12 @@ interface AppStore {
   updateProduct: (id: string, updates: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
 
+  // Customers
+  customers: Customer[];
+  addCustomer: (customer: Omit<Customer, 'id' | 'points'>) => void;
+  updateCustomer: (id: string, updates: Partial<Customer>) => void;
+  deleteCustomer: (id: string) => void;
+
   // Cart (for customer & POS)
   cart: CartItem[];
   addToCart: (product: Product) => void;
@@ -26,7 +33,7 @@ interface AppStore {
 
   // Orders
   orders: Order[];
-  placeOrder: (tableNumber?: number) => Order | null;
+  placeOrder: (tableNumber?: number, customerId?: string) => Order | null;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   markOrderPaid: (orderId: string) => void;
   getOrderById: (orderId: string) => Order | undefined;
@@ -63,6 +70,33 @@ export const useStore = create<AppStore>((set, get) => ({
       products: state.products.filter((p) => p.id !== id),
     }));
     get().addToast('Product deleted.', 'info');
+  },
+
+  // Customers
+  customers: [...mockCustomers],
+
+  addCustomer: (customer) => {
+    const id = `cust-${Date.now()}`;
+    set((state) => ({
+      customers: [...state.customers, { ...customer, id, points: 0 }],
+    }));
+    get().addToast('Customer added successfully!', 'success');
+  },
+
+  updateCustomer: (id, updates) => {
+    set((state) => ({
+      customers: state.customers.map((c) =>
+        c.id === id ? { ...c, ...updates } : c
+      ),
+    }));
+    get().addToast('Customer updated!', 'success');
+  },
+
+  deleteCustomer: (id) => {
+    set((state) => ({
+      customers: state.customers.filter((c) => c.id !== id),
+    }));
+    get().addToast('Customer deleted.', 'info');
   },
 
   // Cart
@@ -114,7 +148,7 @@ export const useStore = create<AppStore>((set, get) => ({
   // Orders
   orders: [],
 
-  placeOrder: (tableNumber) => {
+  placeOrder: (tableNumber, customerId) => {
     const { cart, clearCart, addToast } = get();
     if (cart.length === 0) return null;
 
@@ -134,9 +168,24 @@ export const useStore = create<AppStore>((set, get) => ({
       timestamp: new Date().toISOString(),
       paymentStatus: 'unpaid',
       tableNumber,
+      customerId,
     };
 
-    set((state) => ({ orders: [order, ...state.orders] }));
+    set((state) => {
+      // Award points if customer is linked
+      let updatedCustomers = state.customers;
+      if (customerId) {
+        const pointsAwarded = Math.floor(total * 10); // 10 points per dollar
+        updatedCustomers = state.customers.map(c => 
+          c.id === customerId ? { ...c, points: c.points + pointsAwarded } : c
+        );
+      }
+      return { 
+        orders: [order, ...state.orders],
+        customers: updatedCustomers
+      };
+    });
+    
     clearCart();
     addToast(`Order ${order.id} placed successfully!`, 'success');
     return order;

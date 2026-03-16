@@ -5,7 +5,7 @@ import { formatCurrency } from '../../utils/helpers';
 import {
   Plus, Edit3, Trash2, X, Save, Upload, Search,
   Package, BarChart3, Coffee, Settings, Eye, EyeOff,
-  LayoutGrid, List,
+  LayoutGrid, List, Users, CreditCard
 } from 'lucide-react';
 
 const categories: Category[] = ['Espresso', 'Cappuccino', 'Latte', 'Iced Coffee', 'Pastries', 'Desserts'];
@@ -30,20 +30,53 @@ const emptyForm: ProductForm = {
   popular: false,
 };
 
+interface CustomerFormState {
+  name: string;
+  email: string;
+  phone: string;
+  hasSavedCard: boolean;
+  cardNumber: string;
+  cardBrand: 'visa' | 'mastercard' | 'amex';
+}
+
+const emptyCustomerForm: CustomerFormState = {
+  name: '',
+  email: '',
+  phone: '',
+  hasSavedCard: false,
+  cardNumber: '',
+  cardBrand: 'visa',
+};
+
 export default function AdminPage() {
-  const { products, addProduct, updateProduct, deleteProduct, orders } = useStore();
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<ProductForm>(emptyForm);
+  const { products, addProduct, updateProduct, deleteProduct, orders, customers, addCustomer, updateCustomer, deleteCustomer } = useStore();
+  
+  // App State
+  const [activeTab, setActiveTab] = useState<'products' | 'customers'>('products');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterCategory, setFilterCategory] = useState<Category | 'All'>('All');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Products State
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [productForm, setProductForm] = useState<ProductForm>(emptyForm);
+  const [filterCategory, setFilterCategory] = useState<Category | 'All'>('All');
   const [imagePreview, setImagePreview] = useState<string>('');
+
+  // Customers State
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
+  const [customerForm, setCustomerForm] = useState<CustomerFormState>(emptyCustomerForm);
 
   const filteredProducts = products.filter((p) => {
     if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (filterCategory !== 'All' && p.category !== filterCategory) return false;
+    return true;
+  });
+
+  const filteredCustomers = customers.filter((c) => {
+    if (searchQuery && !c.name.toLowerCase().includes(searchQuery.toLowerCase()) && !c.email.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
 
@@ -53,15 +86,16 @@ export default function AdminPage() {
   const totalOrders = orders.length;
   const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
 
-  const handleOpenAdd = () => {
-    setForm(emptyForm);
-    setEditingId(null);
+  // Handlers - Products
+  const handleOpenAddProduct = () => {
+    setProductForm(emptyForm);
+    setEditingProductId(null);
     setImagePreview('');
-    setShowForm(true);
+    setShowProductForm(true);
   };
 
-  const handleOpenEdit = (product: Product) => {
-    setForm({
+  const handleOpenEditProduct = (product: Product) => {
+    setProductForm({
       name: product.name,
       description: product.description,
       price: product.price.toString(),
@@ -70,9 +104,9 @@ export default function AdminPage() {
       available: product.available,
       popular: product.popular,
     });
-    setEditingId(product.id);
+    setEditingProductId(product.id);
     setImagePreview(product.image);
-    setShowForm(true);
+    setShowProductForm(true);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,43 +115,98 @@ export default function AdminPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
-        setForm((prev) => ({ ...prev, image: result }));
+        setProductForm((prev) => ({ ...prev, image: result }));
         setImagePreview(result);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleProductSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const price = parseFloat(form.price);
+    const price = parseFloat(productForm.price);
     if (isNaN(price) || price <= 0) return;
-    if (!form.name.trim()) return;
+    if (!productForm.name.trim()) return;
 
     const productData = {
-      name: form.name.trim(),
-      description: form.description.trim(),
+      name: productForm.name.trim(),
+      description: productForm.description.trim(),
       price,
-      category: form.category,
-      image: form.image || 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop',
-      available: form.available,
-      popular: form.popular,
+      category: productForm.category,
+      image: productForm.image || 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop',
+      available: productForm.available,
+      popular: productForm.popular,
     };
 
-    if (editingId) {
-      updateProduct(editingId, productData);
+    if (editingProductId) {
+      updateProduct(editingProductId, productData);
     } else {
       addProduct(productData);
     }
 
-    setShowForm(false);
-    setEditingId(null);
-    setForm(emptyForm);
+    setShowProductForm(false);
+    setEditingProductId(null);
+    setProductForm(emptyForm);
     setImagePreview('');
   };
 
-  const handleDelete = (id: string) => {
+  // Handlers - Customers
+  const handleOpenAddCustomer = () => {
+    setCustomerForm(emptyCustomerForm);
+    setEditingCustomerId(null);
+    setShowCustomerForm(true);
+  };
+
+  const handleOpenEditCustomer = (customer: any) => {
+    setCustomerForm({
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      hasSavedCard: !!customer.savedPaymentMethod,
+      cardNumber: customer.savedPaymentMethod ? `**** **** **** ${customer.savedPaymentMethod.last4}` : '',
+      cardBrand: customer.savedPaymentMethod?.brand || 'visa',
+    });
+    setEditingCustomerId(customer.id);
+    setShowCustomerForm(true);
+  };
+
+  const handleCustomerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customerForm.name.trim() || !customerForm.email.trim()) return;
+
+    let savedPaymentMethod = undefined;
+    if (customerForm.hasSavedCard && customerForm.cardNumber) {
+      // simulate extracting last 4
+      const cleanNum = customerForm.cardNumber.replace(/\D/g, '');
+      const last4 = cleanNum.length >= 4 ? cleanNum.slice(-4) : '1234';
+      savedPaymentMethod = { last4, brand: customerForm.cardBrand };
+    }
+
+    const customerData = {
+      name: customerForm.name.trim(),
+      email: customerForm.email.trim(),
+      phone: customerForm.phone.trim(),
+      savedPaymentMethod
+    };
+
+    if (editingCustomerId) {
+      updateCustomer(editingCustomerId, customerData);
+    } else {
+      addCustomer(customerData);
+    }
+
+    setShowCustomerForm(false);
+    setEditingCustomerId(null);
+    setCustomerForm(emptyCustomerForm);
+  };
+
+  const handleDeleteProduct = (id: string) => {
     deleteProduct(id);
+    setDeleteConfirm(null);
+  };
+
+  const handleDeleteCustomer = (id: string) => {
+    deleteCustomer(id);
     setDeleteConfirm(null);
   };
 
@@ -159,28 +248,51 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Category Filter */}
+        {/* Categories / Tabs */}
         <div className="mb-4">
-          <h3 className="text-xs text-warm-gray font-semibold uppercase mb-2 tracking-wider">Categories</h3>
-          <div className="space-y-1">
+          <div className="flex bg-cream p-1 rounded-2xl border border-latte/20 mb-6">
             <button
-              onClick={() => setFilterCategory('All')}
-              className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors
-                ${filterCategory === 'All' ? 'bg-espresso text-cream' : 'text-espresso-light hover:bg-latte/30'}`}
+              onClick={() => setActiveTab('products')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm transition-all
+                ${activeTab === 'products' ? 'bg-white text-espresso shadow-sm' : 'text-warm-gray hover:text-espresso hover:bg-white/50'}`}
             >
-              All Categories
+              <Package className="w-4 h-4" />
+              Products
             </button>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setFilterCategory(cat)}
-                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors
-                  ${filterCategory === cat ? 'bg-espresso text-cream' : 'text-espresso-light hover:bg-latte/30'}`}
-              >
-                {cat}
-              </button>
-            ))}
+            <button
+              onClick={() => setActiveTab('customers')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm transition-all
+                ${activeTab === 'customers' ? 'bg-white text-espresso shadow-sm' : 'text-warm-gray hover:text-espresso hover:bg-white/50'}`}
+            >
+              <Users className="w-4 h-4" />
+              Customers
+            </button>
           </div>
+
+          {activeTab === 'products' && (
+            <div>
+              <h3 className="text-xs text-warm-gray font-semibold uppercase mb-2 tracking-wider">Categories</h3>
+              <div className="space-y-1">
+                <button
+                  onClick={() => setFilterCategory('All')}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors
+                    ${filterCategory === 'All' ? 'bg-espresso text-cream' : 'text-espresso-light hover:bg-latte/30'}`}
+                >
+                  All Categories
+                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setFilterCategory(cat)}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors
+                      ${filterCategory === cat ? 'bg-espresso text-cream' : 'text-espresso-light hover:bg-latte/30'}`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -190,8 +302,12 @@ export default function AdminPage() {
         <div className="bg-white border-b border-latte/30 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-display text-2xl font-bold text-espresso">Product Management</h1>
-              <p className="text-sm text-warm-gray">{filteredProducts.length} products shown</p>
+              <h1 className="font-display text-2xl font-bold text-espresso">
+                {activeTab === 'products' ? 'Product Management' : 'Customer Management'}
+              </h1>
+              <p className="text-sm text-warm-gray">
+                {activeTab === 'products' ? `${filteredProducts.length} products shown` : `${filteredCustomers.length} customers shown`}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               {/* Search */}
@@ -199,46 +315,58 @@ export default function AdminPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-gray" />
                 <input
                   type="text"
-                  placeholder="Search products..."
+                  placeholder={activeTab === 'products' ? "Search products..." : "Search customers..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-4 py-2 rounded-xl bg-cream text-espresso placeholder-warm-gray text-sm focus:outline-none focus:ring-2 focus:ring-gold border border-latte/30"
                 />
               </div>
 
-              {/* View Toggle */}
-              <div className="flex bg-cream rounded-xl p-1 border border-latte/30">
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-espresso text-cream shadow-sm' : 'text-warm-gray hover:text-espresso'}`}
-                >
-                  <List className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-espresso text-cream shadow-sm' : 'text-warm-gray hover:text-espresso'}`}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </button>
-              </div>
+              {activeTab === 'products' && (
+                <div className="flex bg-cream rounded-xl p-1 border border-latte/30">
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`p-2 rounded-lg transition-colors ${viewMode === 'table' ? 'bg-espresso text-cream shadow-sm' : 'text-warm-gray hover:text-espresso'}`}
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-espresso text-cream shadow-sm' : 'text-warm-gray hover:text-espresso'}`}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
 
               {/* Add Button */}
-              <button
-                onClick={handleOpenAdd}
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-olive to-olive-light text-white rounded-xl font-semibold text-sm shadow-md hover:shadow-lg transition-all active:scale-95"
-              >
-                <Plus className="w-4 h-4" />
-                Add Product
-              </button>
+              {activeTab === 'products' ? (
+                <button
+                  onClick={handleOpenAddProduct}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-olive to-olive-light text-white rounded-xl font-semibold text-sm shadow-md hover:shadow-lg transition-all active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Product
+                </button>
+              ) : (
+                <button
+                  onClick={handleOpenAddCustomer}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-olive to-olive-light text-white rounded-xl font-semibold text-sm shadow-md hover:shadow-lg transition-all active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Customer
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Product List */}
+        {/* Dynamic Content List */}
         <div className="flex-1 overflow-y-auto p-6">
-          {viewMode === 'table' ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-latte/20 overflow-hidden">
-              <table className="w-full">
+          {activeTab === 'products' ? (
+            viewMode === 'table' ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-latte/20 overflow-hidden">
+                <table className="w-full">
                 <thead>
                   <tr className="bg-cream/50 border-b border-latte/20">
                     <th className="text-left px-5 py-3 text-xs font-semibold text-warm-gray uppercase tracking-wider">Product</th>
@@ -284,7 +412,7 @@ export default function AdminPage() {
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() => handleOpenEdit(product)}
+                            onClick={() => handleOpenEditProduct(product)}
                             className="p-2 rounded-lg text-warm-gray hover:text-espresso hover:bg-latte/30 transition-colors"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -292,7 +420,7 @@ export default function AdminPage() {
                           {deleteConfirm === product.id ? (
                             <div className="flex items-center gap-1">
                               <button
-                                onClick={() => handleDelete(product.id)}
+                                onClick={() => handleDeleteProduct(product.id)}
                                 className="px-3 py-1.5 text-xs bg-tomato text-white rounded-lg font-medium"
                               >
                                 Confirm
@@ -348,14 +476,14 @@ export default function AdminPage() {
                     <p className="text-xs text-warm-gray mt-2 line-clamp-2">{product.description}</p>
                     <div className="flex items-center gap-2 mt-3">
                       <button
-                        onClick={() => handleOpenEdit(product)}
+                        onClick={() => handleOpenEditProduct(product)}
                         className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium bg-latte/40 text-espresso rounded-xl hover:bg-latte transition-colors"
                       >
                         <Edit3 className="w-3 h-3" />
                         Edit
                       </button>
                       <button
-                        onClick={() => deleteConfirm === product.id ? handleDelete(product.id) : setDeleteConfirm(product.id)}
+                        onClick={() => deleteConfirm === product.id ? handleDeleteProduct(product.id) : setDeleteConfirm(product.id)}
                         className={`flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium rounded-xl transition-colors
                           ${deleteConfirm === product.id
                             ? 'bg-tomato text-white'
@@ -370,26 +498,103 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+            )
+          ) : (
+            <div className="bg-white rounded-2xl shadow-sm border border-latte/20 overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-cream/50 border-b border-latte/20">
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-warm-gray uppercase tracking-wider">Customer</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-warm-gray uppercase tracking-wider">Contact</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-warm-gray uppercase tracking-wider">Points</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-warm-gray uppercase tracking-wider">Payment Method</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-warm-gray uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCustomers.map((customer) => (
+                    <tr key={customer.id} className="border-b border-latte/10 hover:bg-cream/30 transition-colors">
+                      <td className="px-5 py-3">
+                        <p className="font-semibold text-sm text-espresso">{customer.name}</p>
+                      </td>
+                      <td className="px-5 py-3">
+                        <p className="text-sm text-espresso">{customer.phone}</p>
+                        <p className="text-xs text-warm-gray">{customer.email}</p>
+                      </td>
+                      <td className="px-5 py-3 font-semibold text-sm text-olive">
+                        {customer.points}
+                      </td>
+                      <td className="px-5 py-3">
+                        {customer.savedPaymentMethod ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium bg-latte/40 text-espresso-light px-2.5 py-1 rounded-lg uppercase">
+                            <CreditCard className="w-3 h-3" />
+                            {customer.savedPaymentMethod.brand} **** {customer.savedPaymentMethod.last4}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-warm-gray font-medium">None</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleOpenEditCustomer(customer)}
+                            className="p-2 rounded-lg text-warm-gray hover:text-espresso hover:bg-latte/30 transition-colors"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          {deleteConfirm === customer.id ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleDeleteCustomer(customer.id)}
+                                className="px-3 py-1.5 text-xs bg-tomato text-white rounded-lg font-medium"
+                              >
+                                Confirm
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirm(null)}
+                                className="px-3 py-1.5 text-xs bg-latte text-espresso rounded-lg font-medium"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setDeleteConfirm(customer.id)}
+                              className="p-2 rounded-lg text-warm-gray hover:text-tomato hover:bg-tomato/10 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filteredCustomers.length === 0 && (
+                <div className="text-center py-12 text-warm-gray text-sm">No customers found.</div>
+              )}
+            </div>
           )}
         </div>
       </div>
 
-      {/* Add/Edit Modal */}
-      {showForm && (
+      {/* Product Add/Edit Modal */}
+      {showProductForm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowForm(false)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowProductForm(false)} />
           <div className="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="sticky top-0 bg-white flex items-center justify-between px-6 py-4 border-b border-latte/20 rounded-t-3xl z-10">
               <h2 className="font-display text-xl font-bold text-espresso">
-                {editingId ? 'Edit Product' : 'Add New Product'}
+                {editingProductId ? 'Edit Product' : 'Add New Product'}
               </h2>
-              <button onClick={() => setShowForm(false)} className="p-2 rounded-xl hover:bg-latte/30 transition-colors">
+              <button onClick={() => setShowProductForm(false)} className="p-2 rounded-xl hover:bg-latte/30 transition-colors">
                 <X className="w-5 h-5 text-espresso" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleProductSubmit} className="p-6 space-y-4">
               {/* Image Upload */}
               <div>
                 <label className="text-sm font-semibold text-espresso block mb-2">Product Image</label>
@@ -399,7 +604,7 @@ export default function AdminPage() {
                       <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                       <button
                         type="button"
-                        onClick={() => { setImagePreview(''); setForm((prev) => ({ ...prev, image: '' })); }}
+                        onClick={() => { setImagePreview(''); setProductForm((prev) => ({ ...prev, image: '' })); }}
                         className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-lg hover:bg-white transition-colors"
                       >
                         <X className="w-4 h-4 text-espresso" />
@@ -417,8 +622,8 @@ export default function AdminPage() {
                 <input
                   type="text"
                   placeholder="Or paste image URL..."
-                  value={form.image.startsWith('data:') ? '' : form.image}
-                  onChange={(e) => { setForm((prev) => ({ ...prev, image: e.target.value })); setImagePreview(e.target.value); }}
+                  value={productForm.image.startsWith('data:') ? '' : productForm.image}
+                  onChange={(e) => { setProductForm((prev) => ({ ...prev, image: e.target.value })); setImagePreview(e.target.value); }}
                   className="mt-2 w-full px-4 py-2 rounded-xl bg-cream text-espresso text-sm border border-latte/30 focus:outline-none focus:ring-2 focus:ring-gold placeholder-warm-gray"
                 />
               </div>
@@ -429,8 +634,8 @@ export default function AdminPage() {
                 <input
                   type="text"
                   required
-                  value={form.name}
-                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                  value={productForm.name}
+                  onChange={(e) => setProductForm((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g. Classic Espresso"
                   className="w-full px-4 py-2.5 rounded-xl bg-cream text-espresso text-sm border border-latte/30 focus:outline-none focus:ring-2 focus:ring-gold placeholder-warm-gray"
                 />
@@ -441,8 +646,8 @@ export default function AdminPage() {
                 <label className="text-sm font-semibold text-espresso block mb-1.5">Description</label>
                 <textarea
                   rows={3}
-                  value={form.description}
-                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                  value={productForm.description}
+                  onChange={(e) => setProductForm((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="Describe this product..."
                   className="w-full px-4 py-2.5 rounded-xl bg-cream text-espresso text-sm border border-latte/30 focus:outline-none focus:ring-2 focus:ring-gold placeholder-warm-gray resize-none"
                 />
@@ -457,8 +662,8 @@ export default function AdminPage() {
                     required
                     min="0.01"
                     step="0.01"
-                    value={form.price}
-                    onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
+                    value={productForm.price}
+                    onChange={(e) => setProductForm((prev) => ({ ...prev, price: e.target.value }))}
                     placeholder="0.00"
                     className="w-full px-4 py-2.5 rounded-xl bg-cream text-espresso text-sm border border-latte/30 focus:outline-none focus:ring-2 focus:ring-gold placeholder-warm-gray"
                   />
@@ -466,8 +671,8 @@ export default function AdminPage() {
                 <div>
                   <label className="text-sm font-semibold text-espresso block mb-1.5">Category *</label>
                   <select
-                    value={form.category}
-                    onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value as Category }))}
+                    value={productForm.category}
+                    onChange={(e) => setProductForm((prev) => ({ ...prev, category: e.target.value as Category }))}
                     className="w-full px-4 py-2.5 rounded-xl bg-cream text-espresso text-sm border border-latte/30 focus:outline-none focus:ring-2 focus:ring-gold"
                   >
                     {categories.map((cat) => (
@@ -482,8 +687,8 @@ export default function AdminPage() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={form.available}
-                    onChange={(e) => setForm((prev) => ({ ...prev, available: e.target.checked }))}
+                    checked={productForm.available}
+                    onChange={(e) => setProductForm((prev) => ({ ...prev, available: e.target.checked }))}
                     className="w-4 h-4 accent-olive rounded"
                   />
                   <span className="text-sm font-medium text-espresso">Available</span>
@@ -491,8 +696,8 @@ export default function AdminPage() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={form.popular}
-                    onChange={(e) => setForm((prev) => ({ ...prev, popular: e.target.checked }))}
+                    checked={productForm.popular}
+                    onChange={(e) => setProductForm((prev) => ({ ...prev, popular: e.target.checked }))}
                     className="w-4 h-4 accent-gold rounded"
                   />
                   <span className="text-sm font-medium text-espresso">Popular</span>
@@ -503,7 +708,7 @@ export default function AdminPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={() => setShowProductForm(false)}
                   className="flex-1 py-3 rounded-2xl border-2 border-latte text-warm-gray font-semibold hover:border-espresso-light hover:text-espresso transition-colors"
                 >
                   Cancel
@@ -513,7 +718,120 @@ export default function AdminPage() {
                   className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-olive to-olive-light text-white font-semibold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                 >
                   <Save className="w-4 h-4" />
-                  {editingId ? 'Update' : 'Add'} Product
+                  {editingProductId ? 'Update' : 'Add'} Product
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Add/Edit Modal */}
+      {showCustomerForm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowCustomerForm(false)} />
+          <div className="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white flex items-center justify-between px-6 py-4 border-b border-latte/20 rounded-t-3xl z-10">
+              <h2 className="font-display text-xl font-bold text-espresso">
+                {editingCustomerId ? 'Edit Customer' : 'Add New Customer'}
+              </h2>
+              <button onClick={() => setShowCustomerForm(false)} className="p-2 rounded-xl hover:bg-latte/30 transition-colors">
+                <X className="w-5 h-5 text-espresso" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCustomerSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="text-sm font-semibold text-espresso block mb-1.5">Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={customerForm.name}
+                  onChange={(e) => setCustomerForm((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g. John Doe"
+                  className="w-full px-4 py-2.5 rounded-xl bg-cream text-espresso text-sm border border-latte/30 focus:outline-none focus:ring-2 focus:ring-gold"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-espresso block mb-1.5">Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={customerForm.email}
+                  onChange={(e) => setCustomerForm((prev) => ({ ...prev, email: e.target.value }))}
+                  placeholder="e.g. john@example.com"
+                  className="w-full px-4 py-2.5 rounded-xl bg-cream text-espresso text-sm border border-latte/30 focus:outline-none focus:ring-2 focus:ring-gold"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-espresso block mb-1.5">Phone Number</label>
+                <input
+                  type="tel"
+                  value={customerForm.phone}
+                  onChange={(e) => setCustomerForm((prev) => ({ ...prev, phone: e.target.value }))}
+                  placeholder="e.g. +39 333 123 4567"
+                  className="w-full px-4 py-2.5 rounded-xl bg-cream text-espresso text-sm border border-latte/30 focus:outline-none focus:ring-2 focus:ring-gold"
+                />
+              </div>
+
+              <div className="bg-latte/10 p-4 rounded-2xl border border-latte/30 mt-4">
+                <label className="flex items-center gap-2 cursor-pointer mb-3">
+                  <input
+                    type="checkbox"
+                    checked={customerForm.hasSavedCard}
+                    onChange={(e) => setCustomerForm((prev) => ({ ...prev, hasSavedCard: e.target.checked }))}
+                    className="w-4 h-4 accent-olive rounded"
+                  />
+                  <span className="text-sm font-medium text-espresso flex items-center gap-1.5">
+                    <CreditCard className="w-4 h-4 text-warm-gray" />
+                    Has Saved Payment Method
+                  </span>
+                </label>
+
+                {customerForm.hasSavedCard && (
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                      <label className="text-xs font-semibold text-warm-gray block mb-1">Card Number (Mock)</label>
+                      <input
+                        type="text"
+                        value={customerForm.cardNumber}
+                        onChange={(e) => setCustomerForm((prev) => ({ ...prev, cardNumber: e.target.value }))}
+                        placeholder="**** **** **** 1234"
+                        className="w-full px-3 py-2 rounded-lg bg-white text-espresso text-sm border border-latte/30 focus:outline-none focus:ring-2 focus:ring-gold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-warm-gray block mb-1">Card Brand</label>
+                      <select
+                        value={customerForm.cardBrand}
+                        onChange={(e) => setCustomerForm((prev) => ({ ...prev, cardBrand: e.target.value as any }))}
+                        className="w-full px-3 py-2 rounded-lg bg-white text-espresso text-sm border border-latte/30 focus:outline-none focus:ring-2 focus:ring-gold appearance-none"
+                      >
+                        <option value="visa">Visa</option>
+                        <option value="mastercard">Mastercard</option>
+                        <option value="amex">Amex</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCustomerForm(false)}
+                  className="flex-1 py-3 rounded-2xl border-2 border-latte text-warm-gray font-semibold hover:border-espresso-light hover:text-espresso transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-olive to-olive-light text-white font-semibold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                >
+                  <Save className="w-4 h-4" />
+                  {editingCustomerId ? 'Update' : 'Add'} Customer
                 </button>
               </div>
             </form>

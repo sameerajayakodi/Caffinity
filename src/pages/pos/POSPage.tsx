@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { formatCurrency } from '../../utils/helpers';
 import type { Category } from '../../types';
-import { Plus, Minus, Trash2, ShoppingCart, CreditCard, Search, X } from 'lucide-react';
+import { Plus, Minus, Trash2, ShoppingCart, CreditCard, Search, X, User } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,11 +18,12 @@ const categoryIcons: Record<Category, string> = {
 };
 
 export default function POSPage() {
-  const { products, cart, addToCart, removeFromCart, updateCartQuantity, clearCart, placeOrder } = useStore();
+  const { products, customers, cart, addToCart, removeFromCart, updateCartQuantity, clearCart, placeOrder } = useStore();
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<Category>('Espresso');
   const [searchQuery, setSearchQuery] = useState('');
-  const [orderResult, setOrderResult] = useState<{ orderId: string; total: number } | null>(null);
+  const [orderResult, setOrderResult] = useState<{ orderId: string; total: number; customerId?: string } | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
 
   const filteredProducts = products.filter((p) => {
     if (!p.available) return false;
@@ -33,9 +34,10 @@ export default function POSPage() {
   const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
   const handlePlaceOrder = () => {
-    const order = placeOrder();
+    const order = placeOrder(undefined, selectedCustomerId || undefined);
     if (order) {
-      setOrderResult({ orderId: order.id, total: order.total });
+      setOrderResult({ orderId: order.id, total: order.total, customerId: selectedCustomerId || undefined });
+      setSelectedCustomerId('');
     }
   };
 
@@ -66,10 +68,10 @@ export default function POSPage() {
             <p className="text-3xl font-bold text-olive">{formatCurrency(orderResult.total)}</p>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 mt-4">
             <button
               onClick={() => setOrderResult(null)}
-              className="flex-1 py-3 rounded-2xl bg-espresso text-cream font-semibold hover:bg-espresso-light transition-colors"
+              className="flex-1 py-3 rounded-2xl bg-latte/20 text-espresso font-semibold hover:bg-latte/40 transition-colors"
             >
               New Order
             </button>
@@ -171,18 +173,34 @@ export default function POSPage() {
       {/* Right: Order Summary */}
       <div className="w-96 bg-white border-l border-latte/30 flex flex-col shadow-xl">
         <div className="px-6 py-4 border-b border-latte/20">
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-espresso" />
-            <h2 className="font-display text-lg font-bold text-espresso">Current Order</h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-espresso" />
+              <h2 className="font-display text-lg font-bold text-espresso">Current Order</h2>
+            </div>
+            {cart.length > 0 && (
+              <button
+                onClick={clearCart}
+                className="text-xs text-tomato hover:bg-tomato/10 px-2 py-1 rounded transition-colors font-medium"
+              >
+                Clear All
+              </button>
+            )}
           </div>
-          {cart.length > 0 && (
-            <button
-              onClick={clearCart}
-              className="text-xs text-tomato hover:underline mt-1 font-medium"
+          
+          <div className="mt-4 relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-gray" />
+            <select
+              value={selectedCustomerId}
+              onChange={(e) => setSelectedCustomerId(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-cream text-espresso text-sm border border-latte/30 focus:outline-none focus:ring-2 focus:ring-gold appearance-none"
             >
-              Clear all items
-            </button>
-          )}
+              <option value="">Guest (No Customer linked)</option>
+              {customers.map(c => (
+                <option key={c.id} value={c.id}>{c.name} ({c.points} pts)</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">

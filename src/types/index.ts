@@ -18,6 +18,18 @@ export interface OrderItem {
   quantity: number;
 }
 
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  points: number;
+  savedPaymentMethod?: {
+    last4: string;
+    brand: 'visa' | 'mastercard' | 'amex';
+  };
+}
+
 export interface Order {
   id: string;
   items: OrderItem[];
@@ -26,6 +38,7 @@ export interface Order {
   timestamp: string;
   paymentStatus: 'unpaid' | 'paid';
   tableNumber?: number;
+  customerId?: string;
 }
 
 export interface CartItem {
